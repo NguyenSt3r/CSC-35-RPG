@@ -1,0 +1,307 @@
+#projct.s
+#Thomas Nguyen
+
+#1.Assemble: as -o project.o project.s
+#2.Link: ld -o a.out project.o csc35.o
+#3.Execute: a.out
+
+.data
+Open:
+     	.ascii "Press any number! \0"
+
+Art:
+    	.ascii "                            \\*/                             \n"
+        .ascii "                         __\\\\U//__                         \n"
+        .ascii "                        |\\\\ | | \\\\|                      \n"
+        .ascii "                        | \\\\| |\\ \\|                      \n"
+        .ascii "                        |\\ \\| |\\\\ |                      \n"
+        .ascii "                        |\\\\_|_|_\\\\|                      \n"
+        .ascii "                       ~~~~~~~~~~~~~                         \0"
+
+LetterX:
+        .ascii "                (_ _)  (_ _)                    \n"
+        .ascii "                  \\\\    //                    \n"
+        .ascii "                   \\\\  //                     \n"
+        .ascii "                    \\\\//                      \n"
+        .ascii "                     ||                         \n"
+        .ascii "                    //\\\\                      \n"
+        .ascii "                   //  \\\\                     \n"
+        .ascii "                 _//    \\\\_                   \n"
+        .ascii "                (   )  (   )                    \n\0"
+        
+Line:
+     	.ascii "\n***********************************************************************\n\0"
+
+Greetings:
+	.ascii "Welcome to the Chunin Exams in the Hidden Leaf Willage!\n\0"
+
+Question:
+	.ascii "How many Ninjas are going to decide who will be the next Hokage? \0"
+
+DisplayNinjas:
+	.ascii "Ninja \0"
+
+Colon:
+      	.ascii ": \0"
+
+DisplayHealth:
+	.ascii "\nHealth: \0"
+
+DisplayTarget:
+	.ascii "\nChoose a Enemy: \0"
+
+Attack:
+       	.ascii "Attack hits directly for \0"
+
+Missed:
+       	.ascii "Attack missed!\n\0"
+
+Points:
+       	.ascii " points!\n\0"
+
+Elimination:
+	.ascii "A player has been eliminated from  battle! \n\0"
+  
+Naruto:
+       	.ascii "Naruto\0"
+
+Sasuke:
+       	.ascii "Sasuke\0"
+
+Sakura:
+       	.ascii "Sakura\0"
+        
+Kakashi:
+        .ascii "Kakashi\0"
+
+Print:
+      	.ascii "Printed \0"
+
+NumberofNinjas:
+        .quad 0
+
+SurvivingNinjas:
+        .quad 0
+
+Health:
+       	.quad 100
+        .quad 100
+        .quad 100
+        .quad 100
+        .quad 100
+        
+Current:
+        .quad 0
+
+Target:
+       	.quad 0
+
+Damage:
+       	.quad 0
+
+NewLine:
+        .ascii "\n\0"
+
+Won:
+    	.ascii "And the winner is: \0"
+
+Ending:
+       	.ascii "Thanks for playing!\n\0"     
+.text
+
+.global _start
+
+_start:
+       	mov $Open, %rcx
+        call PrintCString
+        call ScanInt
+	
+        mov $NewLine, %rcx                      #Provides a New Line/Also
+        call PrintCString                       #used for Checkpoints
+	
+        mov $1, %rcx
+        call SetForeColor
+        mov $Art, %rcx
+        call PrintCString
+        mov $7, %rcx
+        call SetForeColor
+        mov $Line, %rcx
+        call PrintCString
+
+        #Gift is opened and the game is opened!
+        mov $Greetings, %rcx                    #The name of the game
+        call PrintCString
+        mov $Question, %rcx                     #Ask for the number of players to be entered in the battle
+        call PrintCString
+        call ScanInt
+        #sub $1, %rcx
+        mov %rcx, NumberofNinjas
+        mov %rcx, SurvivingNinjas
+        mov $NewLine, %rcx                      #Checkpoint
+        call PrintCString
+
+        #jmp While
+
+While:
+        cmp $1, SurvivingNinjas
+        jg Do
+	      jmp End
+
+Do:
+   	    mov Current, %rcx
+        cmp NumberofNinjas, %rcx
+        jge Reset
+
+        mov Current, %rdi
+        cmp $1, Health(, %rdi, 8)
+        jge Alive
+        jmp Next
+
+
+Alive:
+
+      	mov Current, %rdi
+        mov $DisplayNinjas, %rcx
+        call PrintCString
+	
+        mov Current, %rcx
+        call PrintInt
+        mov $Colon, %rcx
+        call PrintCString
+	
+        cmp $0, %rdi
+        je Nar
+	
+        cmp $1, %rdi
+        je Sas
+
+        cmp $2, %rdi
+        je Sak
+
+        cmp $3, %rdi
+        je Kak
+
+Battle:
+       	mov $DisplayHealth, %rcx
+        call PrintCString
+        mov Health(, %rdi, 8), %rcx
+        call PrintInt
+        mov $DisplayTarget, %rcx                #Target is asked during the Champion's turn and the proce$
+        call PrintCString
+        call ScanInt
+        mov %rcx, Target
+        mov Target, %rdi
+        mov $20, %rcx
+        call Random
+        subq %rcx, Health(,%rdi, 8)
+        mov %rcx, Damage
+        cmp $0, Damage                          #Indicate that the attack missed
+        je Miss
+        
+        mov $Attack, %rcx
+        call PrintCString
+        mov Damage, %rcx
+        call PrintInt
+        mov $Points, %rcx
+        call PrintCString
+
+        mov $NewLine, %rcx                      #Checkpoint
+        call PrintCString
+	
+        mov $0, %rdi
+        mov $0, %rcx
+        mov %rcx, SurvivingNinjas
+
+Loop:
+       	cmp NumberofNinjas, %rdi
+        jge Next
+        
+        cmp $1, Health(, %rdi, 8)
+        jge Add
+        add $1, %rdi
+        jmp Loop
+
+Add:
+    	  add $1, SurvivingNinjas
+        add $1, %rdi
+        jmp Loop
+
+Next:
+     	  add $1, Current
+        jmp While
+
+Reset:
+      	mov $0, %rcx
+        mov %rcx, Current
+        jmp While
+
+Miss:                                           #If the attack misses, display this prompt
+        mov $Missed, %rcx
+        call PrintCString
+
+        mov $NewLine, %rcx                      #Checkpoint
+        call PrintCString
+
+        add $1, Current                         #Next player
+        jmp While
+
+Nar:
+      	mov $1, %rcx                            # color Red
+        call SetForeColor
+        mov $Naruto, %rcx
+        call PrintCString
+        mov $7, %rcx                            # back to white
+        call SetForeColor
+        jmp Battle
+
+Sas:
+    	  cmp $1, %rdi
+        mov $3, %rcx                            #color to yellow
+        call SetForeColor
+        mov $Sasuke, %rcx
+        call PrintCString
+        mov $7, %rcx
+        call SetForeColor
+        jmp Battle
+
+Sak:
+    	  cmp $2, %rdi
+        jne Battle
+        mov $Sakura, %rcx
+        call PrintCString
+        jmp Battle
+
+Kak:
+    	  cmp $3, %rdi
+        mov $4, %rcx                            #color blue
+        call SetForeColor
+        mov $Kakashi, %rcx
+        call PrintCString
+        mov $7, %rcx
+        call SetForeColor
+        jmp Battle
+
+End:
+    	mov $0, %rdi
+
+WinnerLoop:
+	      cmp SurvivingNinjas, %rdi
+        jge Winner
+
+        cmp $1, Health(, %rdi, 8)
+        jge Add1
+Add1:
+     	  add $1, %rdi
+        jmp WinnerLoop
+
+Winner:
+       	mov $Won, %rcx
+        call PrintCString
+        mov %rdi, %rcx
+        call PrintInt
+        mov $NewLine, %rcx
+        call PrintCString
+
+        mov $Ending, %rcx
+        call PrintCString
+        call EndProgram                                         #Game Ends
